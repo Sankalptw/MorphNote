@@ -54,8 +54,8 @@ async def process_pdf(file: UploadFile = File(...)):
     return rag_pipeline.process_pdf(file)
 
 @app.post("/query-pdf")
-async def query_pdf(query: str):
-    return rag_pipeline.query_pdf(query)
+async def query_pdf(request: TextRequest):
+    return rag_pipeline.query_pdf(request.text)
 
 @app.delete("/delete-pdf")
 async def delete_pdf():
