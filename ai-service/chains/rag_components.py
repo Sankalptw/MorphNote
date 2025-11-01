@@ -4,12 +4,11 @@ from tempfile import NamedTemporaryFile
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_classic.chains import RetrievalQA, LLMChain
+from langchain_classic.chains import RetrievalQA
 from langchain_classic.retrievers import ContextualCompressionRetriever
 from langchain_classic.retrievers.document_compressors import LLMChainExtractor
 from langchain_core.prompts import PromptTemplate
 from utils.config import llm_model, hf_embeddings
-from langchain_core.output_parsers import StrOutputParser
 
 
 class RAGPipeline:
@@ -39,12 +38,12 @@ class RAGPipeline:
     
 
 
+
     def query_pdf(self, query: str):
         if not self.vectorstore:
             return {"error": "No PDF loaded. Please upload a PDF first."}
-
             
-        # 2. Setup retriever with compression
+        #Setup retriever with compression
         base_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 6})
         compressor = LLMChainExtractor.from_llm(llm_model)
         compression_retriever = ContextualCompressionRetriever(
@@ -52,15 +51,20 @@ class RAGPipeline:
             base_compressor=compressor
         )
 
-        # QA Chain with improved prompt - FIXED: changed 'query' to 'question'
+        # QA Chain with improved prompt 
         qa_template = """Answer the question based on the given context. 
+        Use the following process:
+        1. Identify relevant information from the context
+        2. Reason through the answer step-by-step
+        3. Provide a clear, well-supported answer
+        
         If you cannot find the complete answer in the context, say so clearly.
-        Focus on accuracy and cite relevant information from the context.
+        Focus on accuracy and cite specific details from the context.
         
         Context: {context}
         Question: {question}
         
-        Provide a clear, well-supported answer citing specific details from the context:"""
+        Let's think step by step and provide a comprehensive answer:"""
 
         qa_chain = RetrievalQA.from_chain_type(
             llm=llm_model,
