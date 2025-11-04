@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from models.schemas import TextRequest, stylizeRequest
 from chains.keypoints_chain import extract_keypoints
 from chains.stylization_chain import stylize_text
@@ -14,6 +15,16 @@ app = FastAPI(
     title="MorphNote",
     description="AI-Assisted Notes App using Generative AI",
     version="1.0.0"
+)
+
+# Enable CORS so browser-based frontends can call this API during development.
+# For production, restrict `allow_origins` to your frontend domain(s).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # <-- change to specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
