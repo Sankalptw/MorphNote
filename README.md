@@ -20,9 +20,9 @@ It combines **LangChain**, **FastAPI**, and **open-source LLMs** to provide AI-d
 
 | Layer | Technologies |
 |-------|---------------|
-| **Frontend** | Next.js • React • shadcn/ui • Tailwind CSS |
-| **Backend** | FastAPI • Node.js • Express |
-| **AI & RAG** | LangChain • FAISS • OpenAI / Groq / Llama (open-source LLMs) |
+| **Frontend** | Next.js • shadcn/ui • Tailwind CSS |
+| **Backend** | Node.js • Express |
+| **AI & RAG** | FastAPI • LangChain • FAISS • OpenAI / Groq  |
 | **Utilities** | PyPDFLoader • RecursiveCharacterTextSplitter • OpenAIEmbeddings |
 
 ---
