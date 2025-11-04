@@ -9,12 +9,23 @@ from langchain_classic.retrievers import ContextualCompressionRetriever
 from langchain_classic.retrievers.document_compressors import LLMChainExtractor
 from langchain_core.prompts import PromptTemplate
 from utils.config import llm_model, hf_embeddings
+from langchain_community.retrievers import BM25Retriever
+from langchain_core.retrievers import BaseRetriever
+from typing import List
+from langchain_core.documents import Document
+import numpy as np
+from langchain_community.retrievers import BM25Retriever
+from langchain_classic.retrievers import EnsembleRetriever
+import nltk
+from nltk.tokenize import word_tokenize
+
 
 
 class RAGPipeline:
 
     def __init__(self):
         self.vectorstore = None
+        self.syntactic_retriever = None
                 
     def process_pdf(self, file):
         with NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
@@ -29,14 +40,15 @@ class RAGPipeline:
             separators=["\n\n", "\n", ".", "!", "?", " ", ""]
         )
         chunks = splitter.split_documents(docs)
+        
 
         # Create vectorstore
         self.vectorstore = FAISS.from_documents(chunks, hf_embeddings)
+        self.syntactic_retriever = BM25Retriever.from_documents(documents=chunks,preprocess_func= word_tokenize)
         os.remove(temp_path)
 
         return {"message": "PDF processed successfully"}
     
-
 
 
     def query_pdf(self, query: str):
@@ -44,10 +56,14 @@ class RAGPipeline:
             return {"error": "No PDF loaded. Please upload a PDF first."}
             
         #Setup retriever with compression
-        base_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 6})
+        #base_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 6})
+        semantic_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 6})
+        hybrid_retriever = EnsembleRetriever(retrievers = [self.syntactic_retriever, semantic_retriever],
+                                             weights = [0.35,0.65])
+        
         compressor = LLMChainExtractor.from_llm(llm_model)
         compression_retriever = ContextualCompressionRetriever(
-            base_retriever=base_retriever,
+            base_retriever=hybrid_retriever,
             base_compressor=compressor
         )
 
