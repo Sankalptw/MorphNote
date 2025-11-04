@@ -1,44 +1,43 @@
-from langchain_classic.chains import load_summarize_chain   
 from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from utils.config import llm_model
-from langchain_core.documents import Document
 
 
 def summarize_text_notes(text: str) -> str:
-    doc = Document(page_content=text)
+    """Summarize text to 40-50% of original length"""
     
-    template = """
-    As an expert study notes summarizer, create a comprehensive yet concise summary of the following notes. 
-    Focus on maintaining academic accuracy while making the content more digestible.
+    template = """You are a summarization expert. Reduce the following text to 40-50% of its original length.
 
-    NOTES TO SUMMARIZE:
-    {text}
+INSTRUCTIONS:
+- Extract ONLY the most critical information
+- Use simple, direct sentences
+- NO markdown, NO formatting, NO tables
+- NO bullet points
+- Plain text only
+- Keep technical terms exact
+- Must be 40-50% shorter than original
 
-    GUIDELINES:
-    1. Maintain all key technical terms, definitions, and crucial concepts
-    2. Preserve the logical flow and relationships between ideas
-    3. Include important examples or applications if present
-    4. Keep numerical data and specific details when relevant
-    5. Use clear, academic language while being more concise
-    6. Organize information in a coherent narrative flow
-    7. Highlight the most fundamental concepts
+Original text ({original_length} characters):
+{text}
 
-    SUMMARY:
-    """
+Target length: approximately {target_length} characters
 
+Summary (plain text, no formatting):"""
+
+    original_length = len(text)
+    target_length = int(original_length * 0.45)
+    
     prompt = PromptTemplate(
-        input_variables=['text'],
+        input_variables=['text', 'original_length', 'target_length'],
         template=template
     )
 
-    chain = load_summarize_chain(
-        llm=llm_model,
-        chain_type='stuff',
-        verbose=False,
-        prompt=prompt
-    )
+    chain = prompt | llm_model | StrOutputParser()
     
-    summary = chain.run([doc])  
-
-    return summary
-
+    summary = chain.invoke({
+        'text': text,
+        'original_length': original_length,
+        'target_length': target_length
+    })
+    
+    return summary.strip()
