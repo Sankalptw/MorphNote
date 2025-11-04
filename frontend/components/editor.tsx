@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect, useRef, useState } from "react"
 import { FileText } from "lucide-react"
+import AIToolbar from "./ai-toolbar"
 
 interface Note {
   id: string
@@ -21,15 +20,13 @@ interface EditorProps {
 
 export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps) {
   const titleInputRef = useRef<HTMLInputElement>(null)
-  const contentTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const [contentValue, setContentValue] = useState(note?.content || "")
   const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving">("saved")
 
   useEffect(() => {
+    setContentValue(note?.content || "")
     if (titleInputRef.current) {
       titleInputRef.current.value = note?.title || ""
-    }
-    if (contentTextareaRef.current) {
-      contentTextareaRef.current.value = note?.content || ""
     }
   }, [note])
 
@@ -43,6 +40,7 @@ export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
+    setContentValue(newContent)
     onUpdateNote({ content: newContent })
     setAutoSaveStatus("saving")
     const timer = setTimeout(() => setAutoSaveStatus("saved"), 1000)
@@ -87,11 +85,20 @@ export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps
         </div>
       </div>
 
+      <AIToolbar
+        content={contentValue}
+        onContentUpdate={(updates) => {
+          if (updates.content) {
+            setContentValue(updates.content)
+          }
+          onUpdateNote(updates)
+        }}
+      />
+
       <div className="flex-1 overflow-auto px-8 py-8">
         <textarea
-          ref={contentTextareaRef}
           placeholder="Start typing... your note will auto-save"
-          defaultValue={note.content}
+          value={contentValue} 
           onChange={handleContentChange}
           className="w-full h-full text-base text-foreground bg-transparent outline-none placeholder-foreground/30 resize-none leading-relaxed font-light"
         />
