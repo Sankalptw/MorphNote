@@ -1,0 +1,53 @@
+{
+  "timestamp": "2025-11-05T19:44:46.929463",
+  "module": "RAG Pipeline Evaluator",
+  "pdf_file": "evaluation/Global Research Hub.pdf",
+  "test_results": {
+    "total_tests": 10,
+    "passed": 8,
+    "failed": 2,
+    "errors": 0,
+    "success_rate": 80.0
+  },
+  "overall_metrics": {
+    "coherence": {
+      "mean": 0.875,
+      "mse": 0.0469,
+      "rmse": 0.2166,
+      "std_dev": 0.2166
+    },
+    "response_length": {
+      "mean": 271.5,
+      "mse": 37446.25,
+      "rmse": 193.5103
+    },
+    "word_count": {
+      "mean": 53.5,
+      "mse": 812.25,
+      "rmse": 28.5
+    },
+    "answer_relevance": {
+      "mean": 0.55,
+      "mse": 0.0025,
+      "rmse": 0.05,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "accuracy": 1.0
+    },
+    "context_faithfulness": {
+      "mean": 0.0788,
+      "mse": 0.0041,
+      "rmse": 0.064,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "accuracy": 1.0
+    },
+    "vocabulary_richness": {
+      "mean": 0.8346,
+      "mse": 0.0,
+      "rmse": 0.0
+    }
+  }
+}
