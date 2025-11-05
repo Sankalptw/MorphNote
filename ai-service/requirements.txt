@@ -11,4 +11,5 @@ sentence-transformers
 faiss-cpu
 pymupdf
 python-multipart
-rankbm25
+nltk
+rank_bm25

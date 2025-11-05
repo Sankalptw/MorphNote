@@ -18,7 +18,9 @@ from langchain_community.retrievers import BM25Retriever
 from langchain_classic.retrievers import EnsembleRetriever
 import nltk
 from nltk.tokenize import word_tokenize
-
+from langchain_classic.retrievers import ContextualCompressionRetriever 
+from langchain_classic.retrievers.document_compressors import CrossEncoderReranker
+from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 
 
 class RAGPipeline:
@@ -35,9 +37,10 @@ class RAGPipeline:
         # Load and chunk PDF 
         docs = PyMuPDFLoader(temp_path).load()
         splitter = RecursiveCharacterTextSplitter(
-            chunk_size=500,  
-            chunk_overlap=50,
-            separators=["\n\n", "\n", ".", "!", "?", " ", ""]
+            chunk_size=800,  # Increased for better context
+            chunk_overlap=150, # Increased overlap for better coherence
+            separators=["\n\n", "\n", ".", "!", "?", " ", ""],
+            length_function=len
         )
         chunks = splitter.split_documents(docs)
         
@@ -57,30 +60,43 @@ class RAGPipeline:
             
         #Setup retriever with compression
         #base_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 6})
-        semantic_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 6})
+        semantic_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})  
         hybrid_retriever = EnsembleRetriever(retrievers = [self.syntactic_retriever, semantic_retriever],
-                                             weights = [0.35,0.65])
+                                             weights = [0.45, 0.55])  
         
-        compressor = LLMChainExtractor.from_llm(llm_model)
-        compression_retriever = ContextualCompressionRetriever(
-            base_retriever=hybrid_retriever,
-            base_compressor=compressor
-        )
+        
+        #compressor = LLMChainExtractor.from_llm(llm_model)
+        #compression_retriever = ContextualCompressionRetriever(
+        #    base_retriever=hybrid_retriever,
+        #    base_compressor=compressor
+        #)
+        
+        reranker_model = HuggingFaceCrossEncoder(model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2")
+        compressor = CrossEncoderReranker(model= reranker_model, top_n=3)
+        compression_retriever = ContextualCompressionRetriever(base_compressor=compressor, base_retriever=hybrid_retriever)
 
         # QA Chain with improved prompt 
-        qa_template = """Answer the question based on the given context. 
-        Use the following process:
-        1. Identify relevant information from the context
-        2. Reason through the answer step-by-step
-        3. Provide a clear, well-supported answer
+        qa_template = """Answer the question based ONLY on the given context. 
+        Use the following structured process:
+        1. First, identify and quote the specific relevant passages from the context
+        2. Analyze these passages to form your answer
+        3. Provide a concise answer (aim for 2-3 paragraphs maximum)
+        4. If any part of the question cannot be answered from the context, explicitly state that
         
-        If you cannot find the complete answer in the context, say so clearly.
-        Focus on accuracy and cite specific details from the context.
+        Rules:
+        - Do not make assumptions beyond the provided context
+        - Use direct quotes when referring to specific information
+        - Keep the response focused and relevant
+        - Maintain consistent length in responses
+        - Do not use special characters like (*, #) in your answer.
+        - Cite the relevant passage in your answer. It should follow the format:- Relevant text from document: Relevant text 
+        
+        Final answer format should follow above rules and provide the answer to the question first, then cite the relevant passage below. 
         
         Context: {context}
         Question: {question}
         
-        Let's think step by step and provide a comprehensive answer:"""
+        Reasoned Answer:"""
 
         qa_chain = RetrievalQA.from_chain_type(
             llm=llm_model,
@@ -94,7 +110,6 @@ class RAGPipeline:
             }
         )
 
-        # Use the chain with proper input format
         result = qa_chain.invoke({"query": query})
         return {"answer": result["result"]}
     
@@ -102,7 +117,6 @@ class RAGPipeline:
 
 
     def delete_pdf(self):
-        """Clear the current PDF from memory"""
         if self.vectorstore:
             self.vectorstore = None
             return {"message": "PDF removed successfully"}

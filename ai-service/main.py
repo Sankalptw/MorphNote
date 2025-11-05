@@ -5,6 +5,9 @@ from chains.keypoints_chain import extract_keypoints
 from chains.stylization_chain import stylize_text
 from chains.summarization_chain import summarize_text_notes
 from chains.rag_components import RAGPipeline
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 
 
 rag_pipeline = RAGPipeline()

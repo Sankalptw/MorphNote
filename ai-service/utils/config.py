@@ -8,7 +8,8 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 
 ## LLM Model
 llm_model = ChatGroq(model="openai/gpt-oss-20b", 
-                     temperature=0.3, 
+                     temperature=0.1, 
+                     max_tokens=300,
                      groq_api_key=groq_api_key)
 
 ## Vector Embedding Model
