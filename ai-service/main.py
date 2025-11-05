@@ -24,10 +24,11 @@ app = FastAPI(
 # For production, restrict `allow_origins` to your frontend domain(s).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # <-- change to specific origins in production
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    max_age=86400,
 )
 
 @app.get("/")
@@ -63,9 +64,17 @@ async def summarize(req: TextRequest):
 
 # API Routes for RAG Component
 
+# @app.post("/process-pdf")
+# async def process_pdf(file: UploadFile = File(...)):
+#     return rag_pipeline.process_pdf(file)
+
 @app.post("/process-pdf")
 async def process_pdf(file: UploadFile = File(...)):
-    return rag_pipeline.process_pdf(file)
+    print("Received file:", file.filename)
+    result = await rag_pipeline.process_pdf(file)
+    print("Result:", result)
+    return result
+
 
 @app.post("/query-pdf")
 async def query_pdf(request: TextRequest):
