@@ -21,6 +21,7 @@ from nltk.tokenize import word_tokenize
 from langchain_classic.retrievers import ContextualCompressionRetriever 
 from langchain_classic.retrievers.document_compressors import CrossEncoderReranker
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+from fastapi import UploadFile
 
 
 class RAGPipeline:
@@ -29,28 +30,39 @@ class RAGPipeline:
         self.vectorstore = None
         self.syntactic_retriever = None
                 
-    def process_pdf(self, file):
+    async def process_pdf(self, file: UploadFile):
+        # Read file content (async-safe)
+        content = await file.read()
+
+        # Save to a temporary file
         with NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
-            temp_pdf.write(file.file.read())
+            temp_pdf.write(content)
             temp_path = temp_pdf.name
 
-        # Load and chunk PDF 
-        docs = PyMuPDFLoader(temp_path).load()
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=800,  # Increased for better context
-            chunk_overlap=150, # Increased overlap for better coherence
-            separators=["\n\n", "\n", ".", "!", "?", " ", ""],
-            length_function=len
-        )
-        chunks = splitter.split_documents(docs)
-        
+        try:
+            # Load and chunk PDF 
+            docs = PyMuPDFLoader(temp_path).load()
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=800,
+                chunk_overlap=150,
+                separators=["\n\n", "\n", ".", "!", "?", " ", ""],
+                length_function=len
+            )
+            chunks = splitter.split_documents(docs)
 
-        # Create vectorstore
-        self.vectorstore = FAISS.from_documents(chunks, hf_embeddings)
-        self.syntactic_retriever = BM25Retriever.from_documents(documents=chunks,preprocess_func= word_tokenize)
-        os.remove(temp_path)
+            # Create vectorstore + BM25 retriever
+            self.vectorstore = FAISS.from_documents(chunks, hf_embeddings)
+            self.syntactic_retriever = BM25Retriever.from_documents(
+                documents=chunks,
+                preprocess_func=word_tokenize
+            )
 
-        return {"message": "PDF processed successfully"}
+            return {"message": "PDF processed successfully"}
+
+        finally:
+            # Ensure temp file is removed even if processing fails
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
     
 
 
