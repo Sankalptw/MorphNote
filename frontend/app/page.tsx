@@ -83,10 +83,10 @@ export default function LandingPage() {
               </span>
             </Link>
             <Link
-              href="https://github.com/HelloPenguin1/MorphNote"
+              href="/pdf"
               className="px-8 py-4 bg-card border border-border/50 text-foreground rounded-lg font-semibold hover:border-border transition-all duration-300 hover:bg-card/80 backdrop-blur-sm"
             >
-              Github
+              Query Pdf
             </Link>
           </div>
 

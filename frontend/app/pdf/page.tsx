@@ -81,14 +81,13 @@ export default function PDFChatPage() {
     setIsQuerying(true)
 
     try {
-      const response = await fetch("/api/pdf/query", {
+      const response = await fetch("http://localhost:8000/query-pdf", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fileId: uploadedFile.id,
-          query,
+          text: query,
         }),
       })
 
@@ -106,7 +105,17 @@ export default function PDFChatPage() {
     }
   }
 
-  const handleRemoveFile = () => {
+  const handleRemoveFile = async  () => {
+
+    const deleteFile = await fetch("http://localhost:8000/delete-pdf", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    const res = await deleteFile.json();
+    console.log(res);
+    
     setUploadedFile(null)
     setChatMessages([])
   }
@@ -218,9 +227,9 @@ export default function PDFChatPage() {
                 chatMessages.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`max-w-md rounded-lg px-4 py-2 ${msg.role === "user"
-                          ? "bg-foreground text-background"
-                          : "bg-foreground/10 border border-border text-foreground"
+                      className={`max-w-xl rounded-lg px-4 py-2 ${msg.role === "user"
+                          ? "bg-foreground text-background max-w-md"
+                          : "bg-foreground/10 border border-border text-foreground w-2xl"
                         }`}
                     >
                       <p className="text-sm">{msg.content}</p>
