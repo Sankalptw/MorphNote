@@ -1,12 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, PenTool, Sparkles, Zap, Lock } from "lucide-react"
+import { ArrowRight, PenTool, Sparkles, Zap, Lock, X } from "lucide-react"
 import { useState, useEffect } from "react"
+import { useAuth } from "@/context/AuthContext"
+import AuthModal from "./auth-modal"
 
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false)
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
+  const [showAuth, setShowAuth] = useState(false)
+  const { token } = useAuth()
 
   useEffect(() => {
     setMounted(true)
@@ -15,7 +19,7 @@ export default function LandingPage() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-hidden ">
+    <div className="min-h-screen bg-background text-foreground overflow-hidden">
       {/* Animated background elements */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-float"></div>
@@ -34,17 +38,16 @@ export default function LandingPage() {
               <PenTool className="w-5 h-5 text-foreground" />
             </div>
             <span className="text-xl font-semibold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-             MorphNote
+              MorphNote
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            
-            <Link
-              href="/login"
+            <button
+              onClick={() => setShowAuth(true)}
               className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:shadow-lg hover:shadow-primary/50 transition-all duration-300 font-medium"
             >
               Get Started
-            </Link>
+            </button>
           </div>
         </div>
       </nav>
@@ -53,8 +56,6 @@ export default function LandingPage() {
       <section className="relative pt-40 pb-32 px-6 z-10">
         <div className="max-w-5xl mx-auto text-center space-y-10">
           <div className="space-y-8 animate-slide-up">
-           
-
             <h1 className="text-7xl md:text-8xl font-bold tracking-tighter text-balance leading-tight">
               Think,
               <br />
@@ -73,15 +74,15 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 animate-slide-up"
             style={{ animationDelay: "0.2s" }}
           >
-            <Link
-              href="/dashboard"
+            <button
+              onClick={() => setShowAuth(true)}
               className="group relative px-8 py-4 bg-primary text-primary-foreground rounded-lg font-semibold overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-primary/50"
             >
               <span className="relative flex items-center gap-2">
                 Start Writing
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
               </span>
-            </Link>
+            </button>
             <Link
               href="/pdf"
               className="px-8 py-4 bg-card border border-border/50 text-foreground rounded-lg font-semibold hover:border-border transition-all duration-300 hover:bg-card/80 backdrop-blur-sm"
@@ -89,8 +90,6 @@ export default function LandingPage() {
               Query Pdf
             </Link>
           </div>
-
-          
         </div>
       </section>
 
@@ -114,7 +113,7 @@ export default function LandingPage() {
               {
                 icon: Lock,
                 title: "Complete Privacy",
-                description: "Your notes stay yours. Stored locally with no tracking, no ads, no distractions.",
+                description: "Your notes stay yours. Stored securely with authentication and encryption.",
                 delay: "0.1s",
                 gradient: "from-purple-500/20 to-pink-500/20",
               },
@@ -161,6 +160,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Showcase Section */}
       <section id="showcase" className="relative py-24 px-6 z-10">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 space-y-4 animate-slide-up">
@@ -212,8 +212,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      
-
       {/* Footer */}
       <footer className="relative border-t border-border/30 py-12 px-6 bg-card/20 backdrop-blur-sm z-10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
@@ -231,6 +229,9 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </div>
   )
 }

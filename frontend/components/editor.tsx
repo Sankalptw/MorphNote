@@ -22,6 +22,7 @@ export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps
   const titleInputRef = useRef<HTMLInputElement>(null)
   const [contentValue, setContentValue] = useState(note?.content || "")
   const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving">("saved")
+  const timeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
     setContentValue(note?.content || "")
@@ -30,12 +31,37 @@ export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps
     }
   }, [note])
 
+  const saveToBackend = async (title: string, content: string) => {
+    if (!note?.id) return
+    
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('http://localhost:3001/api/notes/newnote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, desc: content }),
+      })
+      
+      if (res.ok) {
+        setAutoSaveStatus("saved")
+      }
+    } catch (e) {
+      console.error('Save failed:', e)
+    }
+  }
+
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value
     onUpdateNote({ title: newTitle })
     setAutoSaveStatus("saving")
-    const timer = setTimeout(() => setAutoSaveStatus("saved"), 1000)
-    return () => clearTimeout(timer)
+    
+    clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => {
+      saveToBackend(newTitle, contentValue)
+    }, 1000)
   }
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -43,8 +69,11 @@ export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps
     setContentValue(newContent)
     onUpdateNote({ content: newContent })
     setAutoSaveStatus("saving")
-    const timer = setTimeout(() => setAutoSaveStatus("saved"), 1000)
-    return () => clearTimeout(timer)
+    
+    clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => {
+      saveToBackend(titleInputRef.current?.value || "", newContent)
+    }, 1000)
   }
 
   if (!note) {

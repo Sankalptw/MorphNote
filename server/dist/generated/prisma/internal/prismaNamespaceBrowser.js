@@ -90,6 +90,9 @@ exports.UserScalarFieldEnum = {
     id: 'id',
     email: 'email',
     password: 'password',
+    firstName: 'firstName',
+    lastName: 'lastName',
+    role: 'role',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

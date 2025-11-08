@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRouter from "./routes/auth";
 import noteRouter from "./routes/note";
+import userRouter from './routes/user'
+
 dotenv.config();
 
 const app = express();
@@ -12,6 +14,8 @@ app.use(express.json());
 
 app.use("/api/auth", authRouter);
 app.use("/api/notes", noteRouter)
+app.use('/api/user', userRouter)
+
 
 
 const PORT = process.env.PORT || 3001;

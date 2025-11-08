@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 interface Note {
   id: string
   title: string
-  content: string
-  createdAt: number
-  updatedAt: number
+  desc: string
+  createdAt: string
+  updatedAt: string
 }
 
 interface SidebarProps {
@@ -20,8 +20,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ notes, currentNoteId, onSelectNote, onCreateNote, onDeleteNote }: SidebarProps) {
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp)
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
     const today = new Date()
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
@@ -70,7 +70,7 @@ export default function Sidebar({ notes, currentNoteId, onSelectNote, onCreateNo
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate text-sidebar-foreground">{note.title || "Untitled"}</p>
                     <p className="text-xs text-sidebar-foreground/50 mt-1 truncate line-clamp-1">
-                      {note.content.substring(0, 40) || "Empty note"}
+                      {(note.desc || "").substring(0, 40) || "Empty note"}
                     </p>
                     <p className="text-xs text-sidebar-foreground/40 mt-1.5">{formatDate(note.updatedAt)}</p>
                   </div>

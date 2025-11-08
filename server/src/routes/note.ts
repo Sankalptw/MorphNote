@@ -19,7 +19,7 @@ noteRouter.post("/newnote", userMiddleware, async (req: Request, res: Response) 
         }
 
         const { title, desc } = result.data;
-        const { userId } = req;
+        const userId = (req as any).userId;
 
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
@@ -29,7 +29,7 @@ noteRouter.post("/newnote", userMiddleware, async (req: Request, res: Response) 
             data: {
                 title,
                 desc,
-                user: { connect: { id: userId } }
+                userId
             }
         });
 
@@ -47,34 +47,50 @@ noteRouter.post("/newnote", userMiddleware, async (req: Request, res: Response) 
     }
 });
 
-
 noteRouter.get("/my-notes", userMiddleware, async (req: Request, res: Response) => {
     try {
-
-        const { userId } = req;
+        const userId = (req as any).userId;
 
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
-
         const notes = await prisma.note.findMany({
-            where : {
-                userId
-            }
-        })
-        res.json({
-            notes
-        })
+            where: { userId }
+        });
+        
+        res.json({ notes });
 
-    }
-    catch (e) {
+    } catch (e) {
         console.error("Error:", e);
         return res.status(500).json({
             message: "Server error",
             error: e instanceof Error ? e.message : e
         });
     }
-})
+});
+
+noteRouter.delete("/note/:id", userMiddleware, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId;
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ message: "Note ID required" });
+        }
+
+        const note = await prisma.note.findUnique({ where: { id } });
+        
+        if (!note || note.userId !== userId) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        await prisma.note.delete({ where: { id } });
+        res.json({ message: "Note deleted" });
+
+    } catch (e) {
+        return res.status(500).json({ message: "Server error" });
+    }
+});
 
 export default noteRouter;

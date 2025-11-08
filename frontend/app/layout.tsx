@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,25 +14,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+
 export const metadata: Metadata = {
   title: "MorphNote",
   description: "",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark" >
-    {/* // <html lang="en" > */}
-
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="en" className="dark">
+    <body className="bg-background">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
 }
+
+

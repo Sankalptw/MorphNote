@@ -15,15 +15,16 @@ authRouter.post("/register", async (req, res) => {
         const format = zod_1.default.object({
             email: zod_1.default.string().email(),
             password: zod_1.default.string().min(3),
+            firstName: zod_1.default.string().min(1),
+            lastName: zod_1.default.string().min(1),
+            role: zod_1.default.enum(["student", "professor", "admin", "Engineer", "Others"]),
         });
         const result = format.safeParse(req.body);
         if (!result.success) {
             return res.status(400).json({ message: result.error.message });
         }
-        const { email, password } = result.data;
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
-        });
+        const { email, password, firstName, lastName, role } = result.data;
+        const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
             return res.status(409).json({ message: "User already exists" });
         }
@@ -32,11 +33,14 @@ authRouter.post("/register", async (req, res) => {
             data: {
                 email,
                 password: hashPass,
+                firstName,
+                lastName,
+                role,
             },
-            select: { id: true, email: true, createdAt: true },
+            select: { id: true, email: true, firstName: true, lastName: true, role: true, createdAt: true },
         });
         return res.status(201).json({
-            message: "User registered ",
+            message: "User registered",
             user: newUser,
         });
     }
@@ -56,9 +60,7 @@ authRouter.post("/login", async (req, res) => {
             return res.status(400).json({ message: result.error.message });
         }
         const { email, password } = result.data;
-        const user = await prisma.user.findUnique({
-            where: { email },
-        });
+        const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -73,16 +75,16 @@ authRouter.post("/login", async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
                 createdAt: user.createdAt,
             },
         });
     }
     catch (e) {
         console.error(e);
-        return res.status(500).json({
-            message: "Server error",
-            error: e instanceof Error ? e.message : e,
-        });
+        return res.status(500).json({ message: "Server error" });
     }
 });
 exports.default = authRouter;

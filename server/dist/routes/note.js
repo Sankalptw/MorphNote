@@ -20,7 +20,7 @@ noteRouter.post("/newnote", middleware_1.default, async (req, res) => {
             return res.status(400).json({ message: result.error.message });
         }
         const { title, desc } = result.data;
-        const { userId } = req;
+        const userId = req.userId;
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
@@ -28,7 +28,7 @@ noteRouter.post("/newnote", middleware_1.default, async (req, res) => {
             data: {
                 title,
                 desc,
-                user: { connect: { id: userId } }
+                userId
             }
         });
         return res.status(201).json({
@@ -46,18 +46,14 @@ noteRouter.post("/newnote", middleware_1.default, async (req, res) => {
 });
 noteRouter.get("/my-notes", middleware_1.default, async (req, res) => {
     try {
-        const { userId } = req;
+        const userId = req.userId;
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
         const notes = await prisma.note.findMany({
-            where: {
-                userId
-            }
+            where: { userId }
         });
-        res.json({
-            notes
-        });
+        res.json({ notes });
     }
     catch (e) {
         console.error("Error:", e);
@@ -65,6 +61,24 @@ noteRouter.get("/my-notes", middleware_1.default, async (req, res) => {
             message: "Server error",
             error: e instanceof Error ? e.message : e
         });
+    }
+});
+noteRouter.delete("/note/:id", middleware_1.default, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ message: "Note ID required" });
+        }
+        const note = await prisma.note.findUnique({ where: { id } });
+        if (!note || note.userId !== userId) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+        await prisma.note.delete({ where: { id } });
+        res.json({ message: "Note deleted" });
+    }
+    catch (e) {
+        return res.status(500).json({ message: "Server error" });
     }
 });
 exports.default = noteRouter;
