@@ -83,9 +83,10 @@ class RAGPipeline:
         #    base_compressor=compressor
         #)
         
-        reranker_model = HuggingFaceCrossEncoder(model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2")
-        compressor = CrossEncoderReranker(model= reranker_model, top_n=3)
-        compression_retriever = ContextualCompressionRetriever(base_compressor=compressor, base_retriever=hybrid_retriever)
+        # reranker_model = HuggingFaceCrossEncoder(model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2")
+        # compressor = CrossEncoderReranker(model= reranker_model, top_n=3)
+        # compression_retriever = ContextualCompressionRetriever(base_compressor=compressor, base_retriever=hybrid_retriever)
+        compression_retriever = hybrid_retriever
 
         # QA Chain with improved prompt 
         qa_template = """Answer the question based ONLY on the given context. 

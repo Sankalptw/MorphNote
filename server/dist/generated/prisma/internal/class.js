@@ -53,7 +53,7 @@ const config = {
             "value": "prisma-client"
         },
         "output": {
-            "value": "/Users/nitinjha/Code/projects/MorphNote/server/src/generated/prisma",
+            "value": "C:\\Users\\Sankalp Tiwari\\OneDrive\\Desktop\\morphpro\\MorphNote\\server\\src\\generated\\prisma",
             "fromEnvVar": null
         },
         "config": {
@@ -62,12 +62,12 @@ const config = {
         "binaryTargets": [
             {
                 "fromEnvVar": null,
-                "value": "darwin-arm64",
+                "value": "windows",
                 "native": true
             }
         ],
         "previewFeatures": [],
-        "sourceFilePath": "/Users/nitinjha/Code/projects/MorphNote/server/prisma/schema.prisma",
+        "sourceFilePath": "C:\\Users\\Sankalp Tiwari\\OneDrive\\Desktop\\morphpro\\MorphNote\\server\\prisma\\schema.prisma",
         "isCustomOutput": true
     },
     "relativePath": "../../../prisma",

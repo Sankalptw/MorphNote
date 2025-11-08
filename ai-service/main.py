@@ -6,6 +6,7 @@ from chains.stylization_chain import stylize_text
 from chains.summarization_chain import summarize_text_notes
 from chains.rag_components import RAGPipeline
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
@@ -24,7 +25,7 @@ app = FastAPI(
 # For production, restrict `allow_origins` to your frontend domain(s).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3002", "http://127.0.0.1:3002"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
