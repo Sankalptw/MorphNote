@@ -7,9 +7,9 @@ import AIToolbar from "./ai-toolbar"
 interface Note {
   id: string
   title: string
-  content: string
-  createdAt: number
-  updatedAt: number
+  desc: string
+  createdAt: string
+  updatedAt: string
 }
 
 interface EditorProps {
@@ -20,33 +20,38 @@ interface EditorProps {
 
 export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps) {
   const titleInputRef = useRef<HTMLInputElement>(null)
-  const [contentValue, setContentValue] = useState(note?.content || "")
+  const [contentValue, setContentValue] = useState(note?.desc || "")
   const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving">("saved")
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    setContentValue(note?.content || "")
+    setContentValue(note?.desc || "")
     if (titleInputRef.current) {
       titleInputRef.current.value = note?.title || ""
     }
-  }, [note])
+  }, [note?.id])
 
   const saveToBackend = async (title: string, content: string) => {
     if (!note?.id) return
     
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:3001/api/notes/newnote', {
-        method: 'POST',
+      const res = await fetch(`http://localhost:3001/api/notes/note/${note.id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ title, desc: content }),
+        body: JSON.stringify({ 
+          title, 
+          desc: content
+        }),
       })
       
       if (res.ok) {
         setAutoSaveStatus("saved")
+      } else {
+        console.error('Save failed:', await res.text())
       }
     } catch (e) {
       console.error('Save failed:', e)
@@ -58,7 +63,7 @@ export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps
     onUpdateNote({ title: newTitle })
     setAutoSaveStatus("saving")
     
-    clearTimeout(timeoutRef.current)
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
     timeoutRef.current = setTimeout(() => {
       saveToBackend(newTitle, contentValue)
     }, 1000)
@@ -67,10 +72,10 @@ export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
     setContentValue(newContent)
-    onUpdateNote({ content: newContent })
+    onUpdateNote({ desc: newContent })
     setAutoSaveStatus("saving")
     
-    clearTimeout(timeoutRef.current)
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
     timeoutRef.current = setTimeout(() => {
       saveToBackend(titleInputRef.current?.value || "", newContent)
     }, 1000)
@@ -116,11 +121,12 @@ export default function Editor({ note, onUpdateNote, onCreateNote }: EditorProps
 
       <AIToolbar
         content={contentValue}
-        onContentUpdate={(updates) => {
-          if (updates.content) {
-            setContentValue(updates.content)
+        onContentUpdate={(updates: any) => {
+          const newContent = updates.content || updates.desc
+          if (newContent) {
+            setContentValue(newContent)
+            onUpdateNote({ desc: newContent })
           }
-          onUpdateNote(updates)
         }}
       />
 

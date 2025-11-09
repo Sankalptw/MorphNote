@@ -5,10 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const zod_1 = __importDefault(require("zod"));
-const authRouter = (0, express_1.Router)();
-const client_1 = require("../generated/prisma/client");
+const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const authRouter = (0, express_1.Router)();
 const prisma = new client_1.PrismaClient();
 authRouter.post("/register", async (req, res) => {
     try {

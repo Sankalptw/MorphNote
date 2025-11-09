@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import authRouter from "./routes/auth";
 import noteRouter from "./routes/note";
 import userRouter from './routes/user'
+import featuresRouter from './routes/features'
+
 
 dotenv.config();
 
@@ -15,6 +17,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/notes", noteRouter)
 app.use('/api/user', userRouter)
+app.use('/api/features', featuresRouter)
 
 
 

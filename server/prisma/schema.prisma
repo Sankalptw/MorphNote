@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// prisma/schema.prisma
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -20,8 +14,10 @@ model User {
   password  String
   firstName String
   lastName  String
-  role      String   // "student" or "professor"
-  notes     Note[]   
+  role      String   @default("student")
+  notes     Note[]
+  folders   Folder[]
+  tags      Tag[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -30,8 +26,54 @@ model Note {
   id        String   @id @default(uuid())
   title     String
   desc      String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Folder & Tags
+  folderId  String?
+  folder    Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags      Tag[]    @relation("NoteTags")
+  
+  // Sharing
+  shares    NoteShare[] @relation("NoteShares")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     Note[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, name])
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     Note[]   @relation("NoteTags")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, name])
+}
+
+model NoteShare {
+  id        String   @id @default(uuid())
+  noteId    String
+  note      Note     @relation("NoteShares", fields: [noteId], references: [id], onDelete: Cascade)
+  sharedWith String
+  permission String  @default("view") // "view" or "edit"
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

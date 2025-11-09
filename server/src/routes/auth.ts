@@ -1,12 +1,11 @@
 import { Router } from "express";
 import z from "zod";
-const authRouter = Router();
-import { PrismaClient } from "../generated/prisma/client";
-import bcrypt from "bcrypt"
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+const authRouter = Router();
 const prisma = new PrismaClient();
-
 
 authRouter.post("/register", async (req, res) => {
     try {
@@ -15,7 +14,7 @@ authRouter.post("/register", async (req, res) => {
             password: z.string().min(3),
             firstName: z.string().min(1),
             lastName: z.string().min(1),
-            role: z.enum(["student", "professor","admin","Engineer","Others"]),
+            role: z.enum(["student", "professor", "admin", "Engineer", "Others"]),
         });
 
         const result = format.safeParse(req.body);
@@ -86,7 +85,7 @@ authRouter.post("/login", async (req, res) => {
         return res.status(200).json({
             message: "Login successful",
             token,
-            user:  {
+            user: {
                 id: user.id,
                 email: user.email,
                 firstName: user.firstName,
