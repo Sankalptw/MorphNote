@@ -13,7 +13,15 @@
 # testing
 /coverage
 
-# next.js
+venv/
+env/
+.venv/
+ai-service/venv/
+
+
+
+# next.jsn
+
 /.next/
 /out/
 

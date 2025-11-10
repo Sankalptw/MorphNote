@@ -3,7 +3,7 @@
 venv/
 ai-service/venv/
 __pycache__/
-
+.venv/
 # dependencies
 /node_modules
 /.pnp
@@ -18,7 +18,7 @@ __pycache__/
 /coverage
 
 # next.jsn
-
+env/
 /.next/
 /out/
 
