@@ -20,7 +20,6 @@ async function connectDB() {
     const db = client.db(DB_NAME);
     notesCollection = db.collection('notes');
     
-    // Create indexes
     await notesCollection.createIndex({ userId: 1, createdAt: -1 });
     
     console.log('✅ Connected to MongoDB - Notes Service');
@@ -34,7 +33,6 @@ async function connectDB() {
 
 connectDB();
 
-// ==================== MIDDLEWARE ====================
 
 const extractUser = (req, res, next) => {
   const auth = req.headers.authorization;
@@ -51,7 +49,6 @@ const extractUser = (req, res, next) => {
   next();
 };
 
-// ==================== CREATE NOTE ====================
 
 app.post('/notes', extractUser, async (req, res) => {
   try {
@@ -98,7 +95,6 @@ app.post('/notes', extractUser, async (req, res) => {
   }
 });
 
-// ==================== GET ALL NOTES ====================
 
 app.get('/notes', extractUser, async (req, res) => {
   try {
@@ -125,7 +121,6 @@ app.get('/notes', extractUser, async (req, res) => {
   }
 });
 
-// ==================== GET SINGLE NOTE ====================
 
 app.get('/notes/:id', extractUser, async (req, res) => {
   try {
@@ -166,7 +161,6 @@ app.get('/notes/:id', extractUser, async (req, res) => {
   }
 });
 
-// ==================== UPDATE NOTE ====================
 
 app.put('/notes/:id', extractUser, async (req, res) => {
   try {
@@ -222,13 +216,11 @@ app.put('/notes/:id', extractUser, async (req, res) => {
   }
 });
 
-// ==================== DELETE NOTE ====================
 
 app.delete('/notes/:id', extractUser, async (req, res) => {
   try {
     console.log('🗑️ Deleting note:', req.params.id);
 
-    // Validate ObjectId
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({
         error: true,
@@ -263,7 +255,6 @@ app.delete('/notes/:id', extractUser, async (req, res) => {
   }
 });
 
-// ==================== HEALTH CHECK ====================
 
 app.get('/health', (req, res) => {
   res.json({
@@ -273,7 +264,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ==================== ERROR HANDLING ====================
 
 app.use((error, req, res, next) => {
   console.error('🔴 Error:', error);
@@ -283,7 +273,6 @@ app.use((error, req, res, next) => {
   });
 });
 
-// ==================== START SERVER ====================
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {
@@ -291,7 +280,6 @@ app.listen(PORT, () => {
   console.log('📊 Health check: http://localhost:5002/health\n');
 });
 
-// Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Shutting down...');
   if (client) await client.close();

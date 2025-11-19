@@ -11,7 +11,6 @@ app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
 
-// Service URLs from environment
 const SERVICES = {
   AUTH: process.env.AUTH_SERVICE_URL || 'http://localhost:5001',
   NOTES: process.env.NOTES_SERVICE_URL || 'http://localhost:5002',
@@ -23,7 +22,6 @@ console.log('   Auth Service:', SERVICES.AUTH);
 console.log('   Notes Service:', SERVICES.NOTES);
 console.log('   Notification Service:', SERVICES.NOTIFICATION);
 
-// ==================== HEALTH CHECK ====================
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -33,7 +31,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ==================== AUTH ROUTES ====================
 
 app.post('/api/auth/register', async (req, res, next) => {
   try {
@@ -70,7 +67,6 @@ app.post('/api/auth/verify', async (req, res, next) => {
   }
 });
 
-// ==================== NOTES ROUTES ====================
 
 app.post('/api/notes', async (req, res, next) => {
   try {
@@ -167,7 +163,6 @@ app.delete('/api/notes/:id', async (req, res, next) => {
   }
 });
 
-// ==================== ERROR HANDLING ====================
 
 app.use((error, req, res, next) => {
   console.error('🔴 Error:', error.message);
@@ -184,7 +179,6 @@ app.use((error, req, res, next) => {
   });
 });
 
-// ==================== START SERVER ====================
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

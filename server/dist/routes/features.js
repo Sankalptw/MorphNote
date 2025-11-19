@@ -14,14 +14,13 @@ const authenticateToken = (req, res, next) => {
         return res.status(401).json({ message: "No token" });
     try {
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-        req.userId = decoded.userId || decoded.id; // ✅ Try userId first, then id
+        req.userId = decoded.userId || decoded.id;
         next();
     }
     catch {
         return res.status(401).json({ message: "Invalid token" });
     }
 };
-// ===== SEARCH NOTES =====
 featuresRouter.get("/notes/search", authenticateToken, async (req, res) => {
     try {
         const { q } = req.query;
@@ -45,7 +44,6 @@ featuresRouter.get("/notes/search", authenticateToken, async (req, res) => {
         return res.status(500).json({ message: "Error searching notes" });
     }
 });
-// ===== FOLDERS =====
 featuresRouter.post("/folders/create", authenticateToken, async (req, res) => {
     try {
         const { name } = req.body;
@@ -94,7 +92,6 @@ featuresRouter.delete("/folders/:id", authenticateToken, async (req, res) => {
         return res.status(500).json({ message: "Error deleting folder" });
     }
 });
-// ===== TAGS =====
 featuresRouter.post("/tags/create", authenticateToken, async (req, res) => {
     try {
         const { name } = req.body;
@@ -150,7 +147,6 @@ featuresRouter.post("/notes/:noteId/tags", authenticateToken, async (req, res) =
         return res.status(500).json({ message: "Error updating tags" });
     }
 });
-// ===== NOTE SHARING =====
 featuresRouter.post("/notes/:noteId/share", authenticateToken, async (req, res) => {
     try {
         const noteId = req.params.noteId;
@@ -202,7 +198,6 @@ featuresRouter.delete("/shares/:shareId", authenticateToken, async (req, res) =>
         return res.status(500).json({ message: "Error removing share" });
     }
 });
-// ===== UPDATE NOTE FOLDER =====
 featuresRouter.put("/notes/:noteId/folder", authenticateToken, async (req, res) => {
     try {
         const { noteId } = req.params;

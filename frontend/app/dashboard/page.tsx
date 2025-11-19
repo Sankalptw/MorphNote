@@ -113,7 +113,7 @@ export default function Dashboard() {
   }
 
   const createFolder = async () => {
-  if (!newFolderName.trim()) {
+    if (!newFolderName.trim()) {
     return
   }
 
@@ -143,6 +143,7 @@ export default function Dashboard() {
     alert('Error creating folder')
   }
 }
+
 
   const deleteFolder = async (folderId: string) => {
     try {

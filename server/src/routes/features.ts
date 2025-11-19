@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken"
 const featuresRouter = Router()
 const prisma = new PrismaClient()
 
-// Middleware
 declare global {
   namespace Express {
     interface Request {
@@ -20,14 +19,13 @@ const authenticateToken = (req: Request, res: Response, next: any) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
-    req.userId = decoded.userId || decoded.id  // ✅ Try userId first, then id
+    req.userId = decoded.userId || decoded.id  
     next()
   } catch {
     return res.status(401).json({ message: "Invalid token" })
   }
 }
 
-// ===== SEARCH NOTES =====
 featuresRouter.get("/notes/search", authenticateToken, async (req: Request, res: Response) => {
   try {
     const { q } = req.query
@@ -53,7 +51,6 @@ featuresRouter.get("/notes/search", authenticateToken, async (req: Request, res:
   }
 })
 
-// ===== FOLDERS =====
 featuresRouter.post("/folders/create", authenticateToken, async (req: Request, res: Response) => {
   try {
     const { name } = req.body
@@ -108,7 +105,6 @@ featuresRouter.delete("/folders/:id", authenticateToken, async (req: Request, re
   }
 })
 
-// ===== TAGS =====
 featuresRouter.post("/tags/create", authenticateToken, async (req: Request, res: Response) => {
   try {
     const { name } = req.body
@@ -170,7 +166,6 @@ featuresRouter.post("/notes/:noteId/tags", authenticateToken, async (req: Reques
   }
 })
 
-// ===== NOTE SHARING =====
 featuresRouter.post("/notes/:noteId/share", authenticateToken, async (req: Request, res: Response) => {
   try {
     const noteId = req.params.noteId
@@ -228,7 +223,6 @@ featuresRouter.delete("/shares/:shareId", authenticateToken, async (req: Request
   }
 })
 
-// ===== UPDATE NOTE FOLDER =====
 featuresRouter.put("/notes/:noteId/folder", authenticateToken, async (req: Request, res: Response) => {
   try {
     const { noteId } = req.params

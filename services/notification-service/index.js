@@ -5,7 +5,6 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// Email transporter configuration
 let transporter;
 
 function initializeTransporter() {
@@ -20,7 +19,6 @@ function initializeTransporter() {
       }
     });
   } else {
-    // Generic SMTP configuration
     transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT || 587,
@@ -37,7 +35,6 @@ function initializeTransporter() {
 
 initializeTransporter();
 
-// ==================== SEND GENERIC EMAIL ====================
 
 app.post('/send-email', async (req, res) => {
   try {
@@ -79,7 +76,6 @@ app.post('/send-email', async (req, res) => {
   }
 });
 
-// ==================== WELCOME EMAIL ====================
 
 app.post('/welcome', async (req, res) => {
   try {
@@ -134,7 +130,6 @@ app.post('/welcome', async (req, res) => {
   }
 });
 
-// ==================== NOTE CREATED NOTIFICATION ====================
 
 app.post('/note-created', async (req, res) => {
   try {
@@ -187,7 +182,6 @@ app.post('/note-created', async (req, res) => {
   }
 });
 
-// ==================== HEALTH CHECK ====================
 
 app.get('/health', (req, res) => {
   res.json({
@@ -197,7 +191,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ==================== ERROR HANDLING ====================
 
 app.use((error, req, res, next) => {
   console.error('🔴 Error:', error);
@@ -207,7 +200,6 @@ app.use((error, req, res, next) => {
   });
 });
 
-// ==================== START SERVER ====================
 
 const PORT = process.env.PORT || 5007;
 app.listen(PORT, () => {

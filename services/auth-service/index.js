@@ -1,4 +1,3 @@
-// DOTENV MUST BE FIRST - BEFORE ANYTHING ELSE
 require('dotenv').config();
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
@@ -15,11 +14,9 @@ const DB_NAME = 'morphnote_auth';
 let client;
 let usersCollection;
 
-// LOG JWT SECRET AT STARTUP
 console.log('🔑 JWT_SECRET being used:', JWT_SECRET);
 console.log('🔑 JWT_SECRET length:', JWT_SECRET.length);
 
-// Connect to MongoDB
 async function connectDB() {
   try {
     client = new MongoClient(MONGO_URI, { useUnifiedTopology: true });
@@ -28,7 +25,6 @@ async function connectDB() {
     const db = client.db(DB_NAME);
     usersCollection = db.collection('users');
     
-    // Create unique index on email
     await usersCollection.createIndex({ email: 1 }, { unique: true });
     
     console.log('✅ Connected to MongoDB - Auth Service');
@@ -42,7 +38,6 @@ async function connectDB() {
 
 connectDB();
 
-// ==================== REGISTER ====================
 
 app.post('/register', async (req, res) => {
   try {
@@ -100,7 +95,6 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// ==================== LOGIN ====================
 
 app.post('/login', async (req, res) => {
   try {
@@ -158,7 +152,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// ==================== VERIFY TOKEN ====================
 
 app.post('/verify', (req, res) => {
   try {
@@ -194,7 +187,6 @@ app.post('/verify', (req, res) => {
   }
 });
 
-// ==================== HEALTH CHECK ====================
 
 app.get('/health', (req, res) => {
   res.json({
@@ -204,7 +196,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ==================== ERROR HANDLING ====================
 
 app.use((error, req, res, next) => {
   console.error('🔴 Error:', error);
@@ -214,7 +205,6 @@ app.use((error, req, res, next) => {
   });
 });
 
-// ==================== START SERVER ====================
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
@@ -222,7 +212,6 @@ app.listen(PORT, () => {
   console.log('📊 Health check: http://localhost:5001/health\n');
 });
 
-// Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Shutting down...');
   if (client) await client.close();

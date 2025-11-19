@@ -23,14 +23,12 @@ const userMiddleware = async (req: Request, res: Response, next: NextFunction) =
 
     const jwtSecret = process.env.JWT_SECRET; 
     if (!jwtSecret) {
-      console.error("❌ JWT Secret not set!");
+      console.error("JWT Secret not set!");
       return res.status(500).json({ message: "Server error" });
     }
 
-    // Verify token signature with backend's JWT secret
     const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
     
-    // Accept MongoDB ObjectId from microservices (userId field)
     const userId = decoded.userId || decoded.id;
     const userEmail = decoded.email;
     
@@ -38,7 +36,6 @@ const userMiddleware = async (req: Request, res: Response, next: NextFunction) =
       return res.status(401).json({ message: "Invalid token format" });
     }
 
-    // Trust the token - user is authenticated by microservices
     req.userId = userId;
     req.userEmail = userEmail;
     
