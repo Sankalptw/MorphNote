@@ -13,7 +13,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
+// console.log('🔍 JWT_SECRET being used:', process.env.JWT_SECRET)
 app.use("/api/auth", authRouter);
 app.use("/api/notes", noteRouter)
 app.use('/api/user', userRouter)

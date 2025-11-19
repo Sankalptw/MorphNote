@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Copy, Check, Share2 } from 'lucide-react'
 import Link from 'next/link'
 
 interface Note {
@@ -10,6 +10,7 @@ interface Note {
   desc: string
   createdAt: string
   updatedAt: string
+  sharedWith?: Array<{ email: string }>
 }
 
 export default function SharedNotePage() {
@@ -18,9 +19,12 @@ export default function SharedNotePage() {
   const [note, setNote] = useState<Note | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
 
   useEffect(() => {
     fetchNote()
+    setShareUrl(`${window.location.origin}/shared/${noteId}`)
   }, [noteId])
 
   const fetchNote = async () => {
@@ -37,6 +41,33 @@ export default function SharedNotePage() {
       console.error(e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const exportNote = async () => {
+    if (!note) return
+
+    try {
+      // Simple text export
+      const text = `${note.title}\n\n${note.desc}`
+      const blob = new Blob([text], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${note.title || 'note'}.txt`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Error exporting note:', e)
+      alert('Failed to export note')
     }
   }
 
@@ -63,20 +94,65 @@ export default function SharedNotePage() {
 
   return (
     <div className='min-h-screen bg-background text-foreground'>
-      <div className='border-b border-border p-4 flex items-center gap-4'>
-        <Link href='/' className='p-2 hover:bg-foreground/10 rounded-lg transition-colors'>
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className='text-2xl font-bold'>Shared Note</h1>
+      {/* Header */}
+      <div className='border-b border-border p-4 flex items-center justify-between bg-foreground/2'>
+        <div className='flex items-center gap-4'>
+          <Link href='/' className='p-2 hover:bg-foreground/10 rounded-lg transition-colors'>
+            <ArrowLeft size={20} />
+          </Link>
+          <h1 className='text-2xl font-bold'>Shared Note</h1>
+        </div>
+        <div className='flex items-center gap-2'>
+          <button
+            onClick={copyToClipboard}
+            className='flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-foreground/10 transition-colors text-sm'
+          >
+            {copied ? <Check size={16} /> : <Copy size={16} />}
+            {copied ? 'Copied!' : 'Copy Link'}
+          </button>
+          <button
+            onClick={exportNote}
+            className='flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-foreground/10 transition-colors text-sm'
+          >
+            <Share2 size={16} />
+            Export
+          </button>
+        </div>
       </div>
 
+      {/* Content */}
       <div className='max-w-4xl mx-auto p-8'>
-        <h2 className='text-3xl font-bold mb-4'>{note.title}</h2>
-        <div className='text-sm text-foreground/60 mb-6'>
-          Last updated: {new Date(note.updatedAt).toLocaleString()}
+        {/* Title */}
+        <h2 className='text-4xl font-bold mb-2 text-foreground'>{note.title}</h2>
+
+        {/* Metadata */}
+        <div className='flex items-center gap-4 text-sm text-foreground/60 mb-8 pb-4 border-b border-border'>
+          <div>
+            Created: {new Date(note.createdAt).toLocaleString()}
+          </div>
+          <div>
+            Last updated: {new Date(note.updatedAt).toLocaleString()}
+          </div>
+          {note.sharedWith && note.sharedWith.length > 0 && (
+            <div>
+              Shared with {note.sharedWith.length} {note.sharedWith.length === 1 ? 'person' : 'people'}
+            </div>
+          )}
         </div>
+
+        {/* Note Content */}
         <div className='prose prose-invert max-w-none'>
-          <p className='text-foreground whitespace-pre-wrap'>{note.desc}</p>
+          <div className='text-foreground whitespace-pre-wrap leading-relaxed bg-foreground/2 p-6 rounded-lg border border-border'>
+            {note.desc || 'No content'}
+          </div>
+        </div>
+
+        {/* Footer Info */}
+        <div className='mt-8 pt-6 border-t border-border text-center text-sm text-foreground/50'>
+          <p>This is a shared read-only view of the note.</p>
+          <Link href='/' className='text-primary hover:underline mt-2 inline-block'>
+            Create your own notes
+          </Link>
         </div>
       </div>
     </div>

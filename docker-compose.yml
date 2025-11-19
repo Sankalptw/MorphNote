@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongo:
+    image: mongo:6
+    container_name: morphnote-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - morphnote
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: morphnote-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: development
+      AUTH_SERVICE_URL: http://auth-service:5001
+      NOTES_SERVICE_URL: http://notes-service:5002
+      NOTIFICATION_SERVICE_URL: http://notification-service:5007
+    depends_on:
+      - auth-service
+      - notes-service
+      - notification-service
+    networks:
+      - morphnote
+    restart: unless-stopped
+
+  # Auth Service
+  auth-service:
+    build: ./services/auth-service
+    container_name: morphnote-auth
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      NODE_ENV: development
+      MONGO_URI: mongodb://admin:password@mongo:27017/?authSource=admin
+      JWT_SECRET: hiibgitbnbvtibvbfirbfitbtigbvtbvtbvtbvtbvtbvtbv
+    depends_on:
+      - mongo
+    networks:
+      - morphnote
+    restart: unless-stopped
+
+  # Notes Service
+  notes-service:
+    build: ./services/notes-service
+    container_name: morphnote-notes
+    ports:
+      - "5002:5002"
+    environment:
+      PORT: 5002
+      NODE_ENV: development
+      MONGO_URI: mongodb://admin:password@mongo:27017/?authSource=admin
+    depends_on:
+      - mongo
+    networks:
+      - morphnote
+    restart: unless-stopped
+
+  # Notification Service
+  notification-service:
+    build: ./services/notification-service
+    container_name: morphnote-notification
+    ports:
+      - "5007:5007"
+    environment:
+      PORT: 5007
+      NODE_ENV: development
+      EMAIL_SERVICE: gmail
+      EMAIL_USER: ${EMAIL_USER:-your-email@gmail.com}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-your-app-password}
+    networks:
+      - morphnote
+    restart: unless-stopped
+
+networks:
+  morphnote:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local

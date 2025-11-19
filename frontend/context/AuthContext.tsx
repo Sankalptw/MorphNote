@@ -2,7 +2,7 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-interface User{ 
+interface User {
   id: string
   email: string
   firstName: string
@@ -22,45 +22,67 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Microservices API Gateway URL
+const API_GATEWAY = 'http://localhost:5000'
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Load token and user from localStorage on mount
   useEffect(() => {
-    const t = localStorage.getItem('token')
-    const u = localStorage.getItem('user')
-    if (t && u) {
-      setToken(t)
-      setUser(JSON.parse(u))
+    try {
+      const storedToken = localStorage.getItem('token')
+      const storedUser = localStorage.getItem('user')
+      
+      if (storedToken && storedUser) {
+        setToken(storedToken)
+        setUser(JSON.parse(storedUser))
+      }
+    } catch (e) {
+      console.error('Error loading auth from storage:', e)
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
     }
   }, [])
-
-  const api = async (endpoint: string, body: any) => {
-  const res = await fetch(`http://localhost:3001/api${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,  
-    },
-    body: JSON.stringify(body),
-  })
-    if (!res.ok) throw new Error((await res.json()).message)
-    return res.json()
-  }
 
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await api('/auth/login', { email, password })
+      const response = await fetch(`${API_GATEWAY}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Login failed')
+      }
+
+      const data = await response.json()
+
+      // Transform microservice response to your format
+      const userData: User = {
+        id: data.userId,
+        email: data.email,
+        firstName: data.name?.split(' ')[0] || 'User',
+        lastName: data.name?.split(' ').slice(1).join(' ') || '',
+        role: data.role || 'student', // Default role if not provided
+      }
+
       setToken(data.token)
-      setUser(data.user)
+      setUser(userData)
       localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      localStorage.setItem('user', JSON.stringify(userData))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error')
+      const errorMessage = e instanceof Error ? e.message : 'Login failed'
+      setError(errorMessage)
       throw e
     } finally {
       setIsLoading(false)
@@ -77,10 +99,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     setError(null)
     try {
-      await api('/auth/register', { email, password, firstName, lastName, role })
+      const fullName = `${firstName} ${lastName}`.trim()
+
+      const response = await fetch(`${API_GATEWAY}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name: fullName,
+          role, // Include role if backend supports it
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Registration failed')
+      }
+
+      const data = await response.json()
+
+      // After successful registration, auto-login
+      const userData: User = {
+        id: data.userId,
+        email: data.email,
+        firstName,
+        lastName,
+        role,
+      }
+
+      setUser(userData)
+      localStorage.setItem('user', JSON.stringify(userData))
+
+      // Now login to get token
       await login(email, password)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error')
+      const errorMessage = e instanceof Error ? e.message : 'Registration failed'
+      setError(errorMessage)
       throw e
     } finally {
       setIsLoading(false)
@@ -90,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null)
     setToken(null)
+    setError(null)
     localStorage.clear()
   }
 

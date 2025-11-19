@@ -20,7 +20,7 @@ const authenticateToken = (req: Request, res: Response, next: any) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
-    req.userId = decoded.id
+    req.userId = decoded.userId || decoded.id  // ✅ Try userId first, then id
     next()
   } catch {
     return res.status(401).json({ message: "Invalid token" })

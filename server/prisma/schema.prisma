@@ -15,9 +15,6 @@ model User {
   firstName String
   lastName  String
   role      String   @default("student")
-  notes     Note[]
-  folders   Folder[]
-  tags      Tag[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -26,8 +23,7 @@ model Note {
   id        String   @id @default(uuid())
   title     String
   desc      String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   // MongoDB ObjectId from microservices
   
   // Folder & Tags
   folderId  String?
@@ -39,32 +35,34 @@ model Note {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@index([userId])
 }
 
 model Folder {
   id        String   @id @default(uuid())
   name      String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   // MongoDB ObjectId from microservices
   notes     Note[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@unique([userId, name])
+  @@index([userId])
 }
 
 model Tag {
   id        String   @id @default(uuid())
   name      String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   // MongoDB ObjectId from microservices
   notes     Note[]   @relation("NoteTags")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@unique([userId, name])
+  @@index([userId])
 }
 
 model NoteShare {
@@ -72,7 +70,7 @@ model NoteShare {
   noteId    String
   note      Note     @relation("NoteShares", fields: [noteId], references: [id], onDelete: Cascade)
   sharedWith String
-  permission String  @default("view") // "view" or "edit"
+  permission String  @default("view")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

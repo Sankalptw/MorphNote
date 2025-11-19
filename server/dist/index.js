@@ -14,6 +14,7 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+// console.log('🔍 JWT_SECRET being used:', process.env.JWT_SECRET)
 app.use("/api/auth", auth_1.default);
 app.use("/api/notes", note_1.default);
 app.use('/api/user', user_1.default);

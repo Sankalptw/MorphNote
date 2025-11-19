@@ -8,6 +8,8 @@ import SearchBar from '@/components/search-bar'
 import ShareModal from '@/components/share-modal'
 import { Share2, Download, FolderPlus, Plus, Trash2, ChevronDown, ChevronRight, File } from 'lucide-react'
 
+const API_URL = 'http://localhost:3001'
+
 interface Note {
   id: string
   title: string
@@ -52,7 +54,7 @@ export default function Dashboard() {
 
   const fetchNotes = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/notes/my-notes', {
+      const res = await fetch(`${API_URL}/api/notes/my-notes`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
@@ -68,15 +70,18 @@ export default function Dashboard() {
 
   const fetchFolders = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/features/folders/all', {
+      const res = await fetch(`${API_URL}/api/features/folders/all`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
         const data = await res.json()
         setFolders(data.folders || [])
+      } else {
+        setFolders([])
       }
     } catch (e) {
       console.error('Error fetching folders:', e)
+      setFolders([])
     }
   }
 
@@ -90,62 +95,68 @@ export default function Dashboard() {
 
     try {
       const res = await fetch(
-        `http://localhost:3001/api/features/notes/search?q=${encodeURIComponent(query)}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${API_URL}/api/features/notes/search?q=${encodeURIComponent(query)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       )
-      
+
       if (res.ok) {
         const data = await res.json()
         setSearchResults(data.notes || [])
         setIsSearching(true)
-        
         if (data.notes && data.notes.length > 0) {
           setCurrentNoteId(data.notes[0].id)
         }
-      } else {
-        console.error('Search failed:', res.status)
-        setSearchResults([])
       }
     } catch (e) {
       console.error('Search error:', e)
-      setSearchResults([])
     }
   }
 
   const createFolder = async () => {
-    if (!newFolderName.trim()) return
-    try {
-      const res = await fetch('http://localhost:3001/api/features/folders/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ name: newFolderName }),
-      })
-      if (res.ok) {
-        setNewFolderName('')
-        setShowFolderInput(false)
-        fetchFolders()
-      }
-    } catch (e) {
-      console.error('Error creating folder:', e)
-    }
+  if (!newFolderName.trim()) {
+    return
   }
+
+  try {
+    console.log('FOLDER CREATE: Starting')
+    const res = await fetch(`${API_URL}/api/features/folders/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name: newFolderName }),
+    })
+
+    console.log('FOLDER CREATE: Response', res.status)
+
+    if (res.ok) {
+      setNewFolderName('')
+      setShowFolderInput(false)
+      fetchFolders()
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert(`Error: ${err.message || 'Failed to create'}`)
+    }
+  } catch (e) {
+    console.error('Folder error:', e)
+    alert('Error creating folder')
+  }
+}
 
   const deleteFolder = async (folderId: string) => {
     try {
-      await fetch(`http://localhost:3001/api/features/folders/${folderId}`, {
+      const res = await fetch(`${API_URL}/api/features/folders/${folderId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
-      fetchFolders()
-      fetchNotes()
-      if (selectedFolderId === folderId) {
-        setSelectedFolderId(null)
-        setViewMode('all')
+      if (res.ok) {
+        fetchFolders()
+        fetchNotes()
+        if (selectedFolderId === folderId) {
+          setSelectedFolderId(null)
+          setViewMode('all')
+        }
       }
     } catch (e) {
       console.error('Error deleting folder:', e)
@@ -154,7 +165,7 @@ export default function Dashboard() {
 
   const createNewNote = async (folderId?: string) => {
     try {
-      const res = await fetch('http://localhost:3001/api/notes/newnote', {
+      const res = await fetch(`${API_URL}/api/notes/newnote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +179,7 @@ export default function Dashboard() {
 
         if (folderId) {
           const updateRes = await fetch(
-            `http://localhost:3001/api/notes/notes/${newNote.id}/folder`,
+            `${API_URL}/api/notes/notes/${newNote.id}/folder`,
             {
               method: 'PUT',
               headers: {
@@ -185,7 +196,6 @@ export default function Dashboard() {
 
         setNotes([newNote, ...notes])
         setCurrentNoteId(newNote.id)
-        fetchFolders()
       }
     } catch (e) {
       console.error('Error creating note:', e)
@@ -202,7 +212,7 @@ export default function Dashboard() {
     )
 
     try {
-      await fetch(`http://localhost:3001/api/notes/note/${currentNoteId}`, {
+      await fetch(`${API_URL}/api/notes/note/${currentNoteId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -220,16 +230,17 @@ export default function Dashboard() {
 
   const deleteNote = async (id: string) => {
     try {
-      await fetch(`http://localhost:3001/api/notes/note/${id}`, {
+      const res = await fetch(`${API_URL}/api/notes/note/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
-      const updatedNotes = notes.filter((note) => note.id !== id)
-      setNotes(updatedNotes)
-      if (currentNoteId === id) {
-        setCurrentNoteId(updatedNotes.length > 0 ? updatedNotes[0].id : null)
+      if (res.ok) {
+        const updatedNotes = notes.filter((note) => note.id !== id)
+        setNotes(updatedNotes)
+        if (currentNoteId === id) {
+          setCurrentNoteId(updatedNotes.length > 0 ? updatedNotes[0].id : null)
+        }
       }
-      fetchFolders()
     } catch (e) {
       console.error('Error deleting note:', e)
     }
@@ -240,10 +251,8 @@ export default function Dashboard() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/notes/note/${currentNote.id}/export`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${API_URL}/api/notes/note/${currentNote.id}/export`,
+        { headers: { Authorization: `Bearer ${token}` } }
       )
 
       if (!response.ok) return
@@ -292,7 +301,6 @@ export default function Dashboard() {
 
   return (
     <div className='flex flex-col h-screen overflow-hidden bg-background'>
-      {/* Header */}
       <header className='border-b border-border p-4 flex items-center justify-between bg-foreground/2'>
         <h1 className='text-2xl font-bold text-foreground'>MorphNote</h1>
         <div className='flex items-center gap-3'>
@@ -302,9 +310,7 @@ export default function Dashboard() {
       </header>
 
       <div className='flex flex-1 overflow-hidden'>
-        {/* Clean Sidebar */}
         <div className='w-80 border-r border-border flex flex-col bg-foreground/2'>
-          {/* Section: Quick Actions */}
           <div className='p-4 border-b border-border space-y-2'>
             <button
               onClick={() => createNewNote()}
@@ -315,7 +321,6 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Section: Notes (Ungrouped) */}
           {!isSearching && (
             <div className='p-4 border-b border-border'>
               <h3 className='text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-3'>
@@ -349,7 +354,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Section: Search Results */}
           {isSearching && (
             <div className='p-4 border-b border-border flex-1 overflow-y-auto'>
               <h3 className='text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-3'>
@@ -378,7 +382,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Section: Folders */}
           {!isSearching && (
             <div className='p-4 flex-1 overflow-y-auto'>
               <div className='flex items-center justify-between mb-3'>
@@ -462,7 +465,6 @@ export default function Dashboard() {
                         </button>
                       </div>
 
-                      {/* Notes in Folder */}
                       {expandedFolders.has(folder.id) && (
                         <div className='ml-6 space-y-1'>
                           {notes
@@ -501,11 +503,9 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Main Editor Area */}
         <div className='flex-1 flex flex-col overflow-hidden'>
           {currentNote ? (
             <>
-              {/* Editor Toolbar */}
               <div className='border-b border-border p-4 flex items-center justify-between bg-foreground/2'>
                 <div>
                   <h2 className='text-sm text-foreground/60'>Editing</h2>
@@ -535,7 +535,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Editor */}
               <div className='flex-1 overflow-hidden'>
                 <RichTextEditor
                   note={currentNote}
@@ -555,7 +554,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Share Modal */}
       {showShareModal && currentNote && (
         <ShareModal
           noteId={currentNote.id}

@@ -14,7 +14,7 @@ const authenticateToken = (req, res, next) => {
         return res.status(401).json({ message: "No token" });
     try {
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-        req.userId = decoded.id;
+        req.userId = decoded.userId || decoded.id; // ✅ Try userId first, then id
         next();
     }
     catch {

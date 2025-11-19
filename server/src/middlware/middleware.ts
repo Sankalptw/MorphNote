@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { PrismaClient } from "../generated/prisma/client";
-
-const prisma = new PrismaClient();
 
 declare module "express" {
   export interface Request {
     userId?: string;
+    userEmail?: string;
   }
 }
 
@@ -25,21 +23,28 @@ const userMiddleware = async (req: Request, res: Response, next: NextFunction) =
 
     const jwtSecret = process.env.JWT_SECRET; 
     if (!jwtSecret) {
-      console.error("JWT Secret not set!");
+      console.error("❌ JWT Secret not set!");
       return res.status(500).json({ message: "Server error" });
     }
 
+    // Verify token signature with backend's JWT secret
     const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
-
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid user' });
+    
+    // Accept MongoDB ObjectId from microservices (userId field)
+    const userId = decoded.userId || decoded.id;
+    const userEmail = decoded.email;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "Invalid token format" });
     }
 
-    req.userId = user.id;
+    // Trust the token - user is authenticated by microservices
+    req.userId = userId;
+    req.userEmail = userEmail;
+    
     next();
-  } catch (e) {
-    console.error("Token Verification Error:", e);
+  } catch (error) {
+    console.error("Token Verification Error:", error instanceof Error ? error.message : error);
     return res.status(401).json({ message: "Invalid token" });
   }
 };

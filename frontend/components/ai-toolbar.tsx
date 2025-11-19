@@ -29,8 +29,17 @@ export default function AIToolbar({ content, onContentUpdate }: AIToolbarProps) 
   const [resultType, setResultType] = useState<"summarize" | "keypoints" | "restyle" | null>(null)
   const [isCopied, setIsCopied] = useState(false)
 
+  // Get plain text (remove HTML tags)
+  const getPlainText = (html: string) => {
+    const temp = document.createElement('div')
+    temp.innerHTML = html
+    return temp.innerText || temp.textContent || ''
+  }
+
+  const plainText = getPlainText(content)
+
   const handleSummarize = async () => {
-    if (!content.trim()) return;
+    if (!plainText.trim()) return;
     setLoading(true);
     setResultType("summarize");
 
@@ -38,7 +47,7 @@ export default function AIToolbar({ content, onContentUpdate }: AIToolbarProps) 
       const response = await fetch("http://localhost:8000/summarize_text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: content }),
+        body: JSON.stringify({ text: plainText }),
       });
 
       const data = await response.json();
@@ -51,16 +60,17 @@ export default function AIToolbar({ content, onContentUpdate }: AIToolbarProps) 
       setLoading(false);
     }
   };
+
   const handleExtractKeyPoints = async () => {
-    if (!content.trim()) return;
+    if (!plainText.trim()) return;
     setLoading(true);
     setResultType("keypoints");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/keypoints", {
+      const response = await fetch("http://localhost:8000/keypoints", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: content }),
+        body: JSON.stringify({ text: plainText }),
       });
 
       if (!response.ok) {
@@ -68,7 +78,14 @@ export default function AIToolbar({ content, onContentUpdate }: AIToolbarProps) 
       }
 
       const data = await response.json();
-      setResult(data.keypoints);
+      // Handle both string and array responses
+      const keypointsText = typeof data.keypoints === 'string' 
+        ? data.keypoints 
+        : Array.isArray(data.keypoints)
+        ? data.keypoints.join('\n')
+        : String(data.keypoints);
+      
+      setResult(keypointsText);
       setIsOpen(true);
     } catch (error) {
       console.error("Error:", error);
@@ -78,18 +95,17 @@ export default function AIToolbar({ content, onContentUpdate }: AIToolbarProps) 
     }
   };
 
-
   const handleRestyle = async () => {
-    if (!content.trim()) return;
+    if (!plainText.trim()) return;
     setLoading(true);
     setResultType("restyle");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/stylize", {
+      const response = await fetch("http://localhost:8000/stylize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: content,
+          text: plainText,
           style: restyleOptions.style,
           options: {
             length: restyleOptions.length,
@@ -114,31 +130,27 @@ export default function AIToolbar({ content, onContentUpdate }: AIToolbarProps) 
     }
   };
 
-
   const copyToClipboard = () => {
     navigator.clipboard.writeText(result)
     setIsCopied(true)
     setTimeout(() => setIsCopied(false), 2000)
   }
 
-  // const insertResult = () => {
-  //   onContentUpdate(result)
-  //   setIsOpen(false)
-  // }
-
   const replaceContent = () => {
-  if (!result.trim()) return
-  onContentUpdate({ content: result }) 
-  setIsOpen(false)
-}
+    if (!result.trim()) return
+    onContentUpdate({ content: result }) 
+    setIsOpen(false)
+  }
 
+  // Disable buttons if no content
+  const isDisabled = !plainText.trim() || loading
 
   return (
     <>
       <div className="flex items-center gap-2 px-8 py-4 border-b border-border bg-background/50 backdrop-blur-sm">
         <button
           onClick={handleSummarize}
-          disabled={loading || !content.trim()}
+          disabled={isDisabled}
           className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground bg-foreground/5 hover:bg-foreground/10 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading && resultType === "summarize" ? (
@@ -151,7 +163,7 @@ export default function AIToolbar({ content, onContentUpdate }: AIToolbarProps) 
 
         <button
           onClick={handleExtractKeyPoints}
-          disabled={loading || !content.trim()}
+          disabled={isDisabled}
           className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground bg-foreground/5 hover:bg-foreground/10 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading && resultType === "keypoints" ? (
@@ -164,7 +176,7 @@ export default function AIToolbar({ content, onContentUpdate }: AIToolbarProps) 
 
         <button
           onClick={() => setShowRestyleModal(true)}
-          disabled={loading || !content.trim()}
+          disabled={isDisabled}
           className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground bg-foreground/5 hover:bg-foreground/10 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading && resultType === "restyle" ? (
